@@ -3,3 +3,10 @@
 *.tex
 
 !export-setup/*
+
+/dplyr_presentation/beamercolorthememonashwhite.sty
+/dplyr_presentation/beamerfontthememonash.sty
+/dplyr_presentation/beamerthememonash.sty
+/dplyr_presentation/images/
+/dplyr_presentation/presento.sty
+/dplyr_presentation/titlepage.png

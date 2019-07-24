@@ -114,7 +114,22 @@ In this talk we focus only on dplyr
 
 <!----------------------------------------------------------------------------->
 
-# dplyr Basics
+## Using dplyr in packages
+
+dplyr is one of the heaviest packages in the R ecosystem in terms of size and
+build time
+
+* As a consequence it should be have a higher utility threshold for inclusion as
+  a package dependency
+* Most dplyr functionality can be easily, albeit tediously, translated to the
+  functions provided in the collection of packages that ship with R
+
+
+
+
+<!----------------------------------------------------------------------------->
+
+# Core dplyr functionality
 
 ## Background
 
@@ -375,56 +390,18 @@ summarize(grouped_mtcars2, mean_mpg = mean(mpg), mean_hp = mean(hp))
 
 <!----------------------------------------------------------------------------->
 
-# A more involved example
-
-## Create a toy dataset
-
-Creating a fictitious dataset in the future
-
-\small
-```{r}
-events <- tibble(
-  id = c("a", "a", "a", "b", "b", "b", "b"),
-  date = as.Date(22373:22379, origin = "1970-01-01"),
-  value = c(21, 18, 12, 34, 32, 29, 26),
-  is_index = c(TRUE, FALSE, FALSE,
-               FALSE, TRUE, FALSE, FALSE),
-  is_event = c(TRUE, FALSE, TRUE,
-               FALSE, TRUE, TRUE, TRUE)
-)
-events <- group_by(events, id)
-```
-
-
-
-
-<!----------------------------------------------------------------------------->
-
-## Print the dataset to the R console
-
-\small
-```{r}
-print(events, n = Inf)
-```
-
-
-
-
-<!----------------------------------------------------------------------------->
-
 ## Using list-columns
 
 It is common to map the data to a one-entry-per-key dataset.  We can use lists
-to collect multiple values into a single entry.
+to collect multiple values into a single entry for later use.
 
 \small
 ```{r}
-subj_means <- summarize(
-  events,
-  event_dates = list(date),
-  mean_val = mean(value)
+summarize(
+  grouped_mtcars2,
+  mpg = list(mpg),
+  mean_hp = mean(hp)
 )
-subj_means
 ```
 
 
@@ -432,16 +409,42 @@ subj_means
 
 <!----------------------------------------------------------------------------->
 
-## Continued data processing
+## Creating nested data frames
 
-By storing your values in a list you can perform multiple steps of data
-processing on the one-entry-per-key dataset and still keep the data around.
+Another common task is to derive values based on multiple grouped variables.
+
+* A helpful pattern is to create a data frame per key and write a function that
+  operates on a single data frame
+* The package tidyr offers the functions `nest` and `unnest` to aid the creation
+  (and inverse operation) of creating such data frames
+* tidyr is a component of the tidyverse and is the descendant of the reshape and
+  reshape2 packages
+
+
+
+
+<!----------------------------------------------------------------------------->
+
+## Creating nested data frames (cont.)
 
 \small
 ```{r}
-subj_at_risk <- filter(
-  subj_means,
-  mean_val < 20
-)
-subj_at_risk
+mtcars2_efficiency <- nest(grouped_mtcars2, mpg, hp, wt)
+mtcars2_efficiency
+```
+
+
+
+
+<!----------------------------------------------------------------------------->
+
+## Creating nested data frames (cont.)
+
+\small
+```{r}
+model_mpg <- function(df) {
+  out <- lm(mpg ~ hp + wt, df)
+  coef(out)
+} 
+purrr::map(mtcars2_efficiency$data, model_mpg)
 ```
